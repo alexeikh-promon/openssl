@@ -15,19 +15,47 @@
 # try to pick it up with the value of _ANDROID_NDK_ROOT below. If
 # ANDROID_NDK_ROOT is set, then the value is ignored.
 # _ANDROID_NDK="android-ndk-r8e"
-_ANDROID_NDK="android-ndk-r9"
-# _ANDROID_NDK="android-ndk-r10"
+_ANDROID_NDK="android-ndk-r13b"
 
-# Set _ANDROID_EABI to the EABI you want to use. You can find the
-# list in $ANDROID_NDK_ROOT/toolchains. This value is always used.
-# _ANDROID_EABI="x86-4.6"
-# _ANDROID_EABI="arm-linux-androideabi-4.6"
-_ANDROID_EABI="arm-linux-androideabi-4.8"
+# Set _ANDROID_APP_ABI to one of the supported APP ABIs. It is the same
+# that you would assign to APP_ABI variable in Application.mk for Android NDK.
+# _ANDROID_APP_ABI="armeabi"
+# _ANDROID_APP_ABI="armeabi-v7a"
+# _ANDROID_APP_ABI="mips"
+# _ANDROID_APP_ABI="x86"
+# _ANDROID_APP_ABI="arm64-v8a"
+# _ANDROID_APP_ABI="mips64"
+# _ANDROID_APP_ABI="x86_64"
 
 # Set _ANDROID_ARCH to the architecture you are building for.
+# Set it to the empty string if you want _ANDROID_ARCH to be
+# figured out from _ANDROID_APP_ABI.
 # This value is always used.
+# _ANDROID_ARCH=arch-arm
+# _ANDROID_ARCH=arch-mips
 # _ANDROID_ARCH=arch-x86
-_ANDROID_ARCH=arch-arm
+# _ANDROID_ARCH=arch-arm64
+# _ANDROID_ARCH=arch-mips64
+# _ANDROID_ARCH=arch-x86_64
+_ANDROID_ARCH=""
+
+# Set Android toolchain version. You can find the list of available
+# toolchains in $ANDROID_NDK_ROOT/toolchains. Toolchain version is
+# a suffix of a directory containing the toolchain.
+_ANDROID_TOOLCHAIN_VERSION="4.9"
+
+# Set _ANDROID_EABI to the EABI you want to use. You can find the
+# list in $ANDROID_NDK_ROOT/toolchains.
+# This value is always used.
+# _ANDROID_EABI="arm-linux-androideabi-4.9"
+# _ANDROID_EABI="mipsel-linux-android-4.9"
+# _ANDROID_EABI="x86-4.9"
+# _ANDROID_EABI="aarch64-linux-android-4.9"
+# _ANDROID_EABI="mips64el-linux-android-4.9"
+# _ANDROID_EABI="x86_64-4.9"
+# Set it to the empty string if you want _ANDROID_EABI to be
+# figured out from _ANDROID_APP_ABI and _ANDROID_TOOLCHAIN_VERSION.
+_ANDROID_EABI=""
 
 # Set _ANDROID_API to the API you want to use. You should set it
 # to one of: android-14, android-9, android-8, android-14, android-5
@@ -36,8 +64,7 @@ _ANDROID_ARCH=arch-arm
 # Android 5.0, there will likely be another platform added (android-22?).
 # This value is always used.
 # _ANDROID_API="android-14"
-_ANDROID_API="android-18"
-# _ANDROID_API="android-19"
+_ANDROID_API="android-21"
 
 #####################################################################
 
@@ -86,6 +113,21 @@ if [ ! -d "$ANDROID_NDK_ROOT/toolchains" ]; then
   # exit 1
 fi
 
+# Figure out _ANDROID_EABI from _ANDROID_APP_ABI and _ANDROID_TOOLCHAIN_VERSION.
+if [ -z "$_ANDROID_EABI" ]
+then
+  case $_ANDROID_APP_ABI in
+    armeabi|armeabi-v7a)  _ANDROID_EABI="arm-linux-androideabi-$_ANDROID_TOOLCHAIN_VERSION";;
+    mips)                 _ANDROID_EABI="mipsel-linux-android-$_ANDROID_TOOLCHAIN_VERSION";;
+    x86)                  _ANDROID_EABI="x86-$_ANDROID_TOOLCHAIN_VERSION";;
+    arm64-v8a)            _ANDROID_EABI="aarch64-linux-android-$_ANDROID_TOOLCHAIN_VERSION";;
+    mips64)               _ANDROID_EABI="mips64el-linux-android-$_ANDROID_TOOLCHAIN_VERSION";;
+    x86_64)               _ANDROID_EABI="x86_64-$_ANDROID_TOOLCHAIN_VERSION";;
+    *) echo "Error: _ANDROID_APP_ABI is not valid. Please edit the script.";;
+  esac
+fi
+
+
 # Error checking
 if [ ! -d "$ANDROID_NDK_ROOT/toolchains/$_ANDROID_EABI" ]; then
   echo "Error: ANDROID_EABI is not a valid path. Please edit this script."
@@ -117,16 +159,29 @@ if [ -z "$ANDROID_TOOLCHAIN" ] || [ ! -d "$ANDROID_TOOLCHAIN" ]; then
   # exit 1
 fi
 
+# Figure out _ANDROID_ARCH from _ANDROID_APP_ABI.
+if [ -z "$_ANDROID_ARCH" ]
+then
+  case $_ANDROID_APP_ABI in
+    armeabi|armeabi-v7a)  _ANDROID_ARCH="arch-arm";;
+    mips)                 _ANDROID_ARCH="arch-mips";;
+    x86)                  _ANDROID_ARCH="arch-x86";;
+    arm64-v8a)            _ANDROID_ARCH="arch-arm64";;
+    mips64)               _ANDROID_ARCH="arch-mips64";;
+    x86_64)               _ANDROID_ARCH="arch-x86_64";;
+    *) echo "Error: _ANDROID_APP_ABI is not valid. Please edit the script.";;
+  esac
+fi
+
+ANDROID_TOOLS=""
 case $_ANDROID_ARCH in
-	arch-arm)	  
-      ANDROID_TOOLS="arm-linux-androideabi-gcc arm-linux-androideabi-ranlib arm-linux-androideabi-ld"
-	  ;;
-	arch-x86)	  
-      ANDROID_TOOLS="i686-linux-android-gcc i686-linux-android-ranlib i686-linux-android-ld"
-	  ;;	  
-	*)
-	  echo "ERROR ERROR ERROR"
-	  ;;
+  arch-arm)     ANDROID_TOOLS=" arm-linux-androideabi-gcc   arm-linux-androideabi-ranlib   arm-linux-androideabi-ld";;
+  arch-mips)    ANDROID_TOOLS="  mipsel-linux-android-gcc    mipsel-linux-android-ranlib    mipsel-linux-android-ld";;
+  arch-x86)     ANDROID_TOOLS="    i686-linux-android-gcc      i686-linux-android-ranlib      i686-linux-android-ld";;
+  arch-arm64)   ANDROID_TOOLS=" aarch64-linux-android-gcc   aarch64-linux-android-ranlib   aarch64-linux-android-ld";;
+  arch-mips64)  ANDROID_TOOLS="mips64el-linux-android-gcc  mips64el-linux-android-ranlib  mips64el-linux-android-ld";;
+  arch-x86_64)  ANDROID_TOOLS="  x86_64-linux-android-gcc    x86_64-linux-android-ranlib    x86_64-linux-android-ld";;
+  *) echo "Error: _ANDROID_ARCH is not valid. Please edit the script.";;
 esac
 
 for tool in $ANDROID_TOOLS
@@ -150,7 +205,7 @@ fi
 # For the Android SYSROOT. Can be used on the command line with --sysroot
 # https://android.googlesource.com/platform/ndk/+/ics-mr0/docs/STANDALONE-TOOLCHAIN.html
 export ANDROID_SYSROOT="$ANDROID_NDK_ROOT/platforms/$_ANDROID_API/$_ANDROID_ARCH"
-export CROSS_SYSROOT="$ANDROID_SYSROOT"
+export SYSROOT="$ANDROID_SYSROOT"
 export NDK_SYSROOT="$ANDROID_SYSROOT"
 
 # Error checking
@@ -184,27 +239,57 @@ fi
 
 # Error checking. Its OK to ignore this if you are *not* building for FIPS
 if [ -z "$FIPS_SIG" ] || [ ! -e "$FIPS_SIG" ]; then
-  echo "Error: FIPS_SIG does not specify incore module. Please edit this script."
+  : # echo "Error: FIPS_SIG does not specify incore module. Please edit this script."
   # echo "$FIPS_SIG"
   # exit 1
 fi
 
 #####################################################################
 
-# Most of these should be OK (MACHINE, SYSTEM, ARCH). RELEASE is ignored.
-export MACHINE=armv7
-export RELEASE=2.6.37
+# Set variables for OpenSSL's "config" script.
 export SYSTEM=android
-export ARCH=arm
-export CROSS_COMPILE="arm-linux-androideabi-"
+export RELEASE=unknown
 
-if [ "$_ANDROID_ARCH" == "arch-x86" ]; then
-	export MACHINE=i686
-	export RELEASE=2.6.37
-	export SYSTEM=android
-	export ARCH=x86
-	export CROSS_COMPILE="i686-linux-android-"
-fi
+case $_ANDROID_APP_ABI in
+  armeabi)
+    export MACHINE=armv5
+    export ARCH=arm
+    export CROSS_COMPILE="arm-linux-androideabi-"
+    ;;
+  armeabi-v7a)
+    export MACHINE=armv7
+    export ARCH=arm
+    export CROSS_COMPILE="arm-linux-androideabi-"
+    ;;
+  mips)
+    export MACHINE=mipsel
+    export ARCH=mips32
+    export CROSS_COMPILE="mipsel-linux-android-"
+    ;;
+  x86)
+    export MACHINE=i686
+    export ARCH=x86
+    export CROSS_COMPILE="i686-linux-android-"
+    ;;
+  arm64-v8a)
+    export MACHINE=aarch64
+    export ARCH=aarch64
+    export CROSS_COMPILE="aarch64-linux-android-"
+    ;;
+  mips64)
+    export MACHINE=mips64el
+    export ARCH=mips64
+    export CROSS_COMPILE="mips64el-linux-android-"
+    ;;
+  x86_64)
+    export MACHINE=x86_64
+    export ARCH=x86_64
+    export CROSS_COMPILE="x86_64-linux-android-"
+    ;;
+  *) echo "Error: _ANDROID_APP_ABI is not valid. Please edit the script.";;
+esac
+
+
 
 # For the Android toolchain
 # https://android.googlesource.com/platform/ndk/+/ics-mr0/docs/STANDALONE-TOOLCHAIN.html
@@ -222,8 +307,10 @@ export HOSTCC=gcc
 VERBOSE=1
 if [ ! -z "$VERBOSE" ] && [ "$VERBOSE" != "0" ]; then
   echo "ANDROID_NDK_ROOT: $ANDROID_NDK_ROOT"
-  echo "ANDROID_ARCH: $_ANDROID_ARCH"
-  echo "ANDROID_EABI: $_ANDROID_EABI"
+  echo "_ANDROID_ARCH: $_ANDROID_ARCH"
+  echo "_ANDROID_APP_ABI: $_ANDROID_APP_ABI"
+  echo "_ANDROID_TOOLCHAIN_VERSION: $_ANDROID_TOOLCHAIN_VERSION"
+  echo "_ANDROID_EABI: $_ANDROID_EABI"
   echo "ANDROID_API: $ANDROID_API"
   echo "ANDROID_SYSROOT: $ANDROID_SYSROOT"
   echo "ANDROID_TOOLCHAIN: $ANDROID_TOOLCHAIN"
