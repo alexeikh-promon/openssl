@@ -860,8 +860,18 @@ case "$GUESSOS" in
   beos-*) OUT="$GUESSOS" ;;
   x86pc-*-qnx6) OUT="QNX6-i386" ;;
   *-*-qnx6) OUT="QNX6" ;;
-  x86-*-android|i?86-*-android) OUT="android-x86" ;;
-  armv[7-9]*-*-android) OUT="android-armv7" ;;
+
+  # Android, 32-bit.
+  armv5*-*-android)             OUT="android-armv5"   ;;
+  armv[7-9]*-*-android)         OUT="android-armv7"   ;;
+  mipsel-*-android)             OUT="android-mips"    ;;
+  x86-*-android|i?86-*-android) OUT="android-x86"     ;;
+
+  # Android, 64-bit.
+  aarch64-*-android)            OUT="android-aarch64" ;;
+  mips64el-*-android)           OUT="android-mips64"  ;;
+  x86_64-*-android)             OUT="android-x86_64"  ;;
+
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 
