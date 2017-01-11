@@ -138,7 +138,7 @@ local_depend:
 	@[ -z "$(THIS)" -o -s buildinf.h ] || rm buildinf.h
 
 clean:
-	rm -f buildinf.h *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f buildinf.h *.s *.o */*.S */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	@target=clean; $(RECURSIVE_MAKE)
 
 dclean:
